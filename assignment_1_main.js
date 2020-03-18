@@ -173,9 +173,8 @@ function createShip(x, y, z, length) {
     let leftEngine = createEngineWithNoseCone(engineRadius, engineBodyLength, faces);
     let rightEngine = createEngineWithNoseCone(engineRadius, engineBodyLength, faces);
 
-    // create headlights
-    let rightHeadLight = createSpotLight(0, 0, -1, 1, 1, 1, 1, 0, 0, 50, 1.0);
-    let leftHeadLight = createSpotLight(0, 0, -1, 1, 1, 1, 1, 0, 0, 50, 1.0);
+    // create headlight
+    let mainHeadLight = createSpotLight(0, 0, 1, 1, 1, 1, 1, 0, 0, 40, 1.0);
 
     // position the main body
     let mainBodyMatrix = new osg.Matrix.create();
@@ -210,17 +209,18 @@ function createShip(x, y, z, length) {
     rightEngineTranslateTransform.setMatrix(rightEngineTranslateMatrix);
     rightEngineTranslateTransform.addChild(rightEngine);
 
-    // attach the headlights
-    let leftHeadLightTranslateMatrix = new osg.Matrix.create();
-    leftHeadLightTranslateMatrix = osg.Matrix.makeTranslate(x-rockRadius, y, z+length, leftHeadLightTranslateMatrix);
-    let leftHeadLightTranslateTransform = new osg.MatrixTransform();
-    leftHeadLightTranslateTransform.setMatrix(rightEngineTranslateMatrix);
-    leftHeadLightTranslateTransform.addChild(rightEngine);
+    // attach the headlight
+    let mainHeadLightTranslateMatrix = new osg.Matrix.create();
+    mainHeadLightTranslateMatrix = osg.Matrix.makeTranslate(x, y, z+length, mainHeadLightTranslateMatrix);
+    let mainHeadLightTranslateTransform = new osg.MatrixTransform();
+    mainHeadLightTranslateTransform.setMatrix(mainHeadLightTranslateMatrix);
+    mainHeadLightTranslateTransform.addChild(mainHeadLight);
 
     let transformArray = [mainBodyTransform,
         mainEngineTranslateTransform,
         leftEngineTranslateTransform,
-        rightEngineTranslateTransform];
+        rightEngineTranslateTransform,
+        mainHeadLightTranslateTransform];
     let mainTransform = new osg.MatrixTransform();
     transformArray.map(tf => mainTransform.addChild(tf));
 

@@ -189,10 +189,10 @@ function createShip(x, y, z, length) {
     let faces = 10;
 
     // create shapes
-    let mainBody = createEngineWithNoseCone(ROCK_RADIUS, length, faces);
-    let mainBodyEngine = createShipNoseCone(ROCK_RADIUS*0.85, length*0.33, faces)
-    let leftEngine = createEngineWithNoseCone(engineRadius, engineBodyLength, faces);
-    let rightEngine = createEngineWithNoseCone(engineRadius, engineBodyLength, faces);
+    let mainBody = createCylinderWithCone(ROCK_RADIUS, length, faces);
+    let mainBodyEngine = createCone(ROCK_RADIUS*0.85, length*0.33, faces)
+    let leftEngine = createCylinderWithCone(engineRadius, engineBodyLength, faces);
+    let rightEngine = createCylinderWithCone(engineRadius, engineBodyLength, faces);
 
     // create headlight
     mainHeadLight = createSpotLight(0, 0, 1, 1, 1, 1, 1, 0, 0, 40, 1.0);
@@ -249,7 +249,7 @@ function createShip(x, y, z, length) {
     return [mainTransform, mainBodyMatrix];
 }
 
-function createEngineWithNoseCone(radius, length, faces) {
+function createCylinderWithCone(radius, length, faces) {
     let engineLength = 0.66*length;
     let noseLength = length - engineLength;
 
@@ -258,7 +258,6 @@ function createEngineWithNoseCone(radius, length, faces) {
     let coordinates = [];
     let normals = [];
     let texCoords = [];
-    let colors = [];
 
     let x0 = radius*Math.cos(angle);
     let y0 = radius*Math.sin(angle);
@@ -278,43 +277,22 @@ function createEngineWithNoseCone(radius, length, faces) {
         coordinates.push(x1, y1, engineLength);
 
         coordinates.push(x0, y0, 0);
-        coordinates.push(x1, y1, engineLength);
-        coordinates.push(x0, y0, engineLength);
-
-        coordinates.push(x0, y0, 0);
         coordinates.push(x1, y1, 0);
-        coordinates.push(x1, y1, engineLength);
-
-        coordinates.push(x1, y1, 0);
-        coordinates.push(x0, y0, 0);
         coordinates.push(0, 0, 0);
 
         x0 = x1;
         y0 = y1;
 
-        // colors
-        for(let j=0; j<12; j++) {
-            colors.push(0, 1, 0, 1);
-        }
-
         // normals
         let nx1 = Math.cos(angle);
         let ny1 = Math.sin(angle);
 
-        normals.push(nx0, ny0, 1);
+        normals.push(0, 0, 1);
         normals.push(nx0, ny0, 0);
         normals.push(nx1, ny1, 0);
 
-        normals.push(nx0, ny0, 0);
-        normals.push(nx1, ny1, 0);
-        normals.push(nx0, ny0, 0);
-
-        normals.push(nx0, ny0, 0);
-        normals.push(nx1, ny1, 0);
-        normals.push(nx1, ny1, 0);
-
-        normals.push(0, 0, -1);
-        normals.push(0, 0, -1);
+        normals.push(nx0, ny0, -1);
+        normals.push(nx1, ny1, -1);
         normals.push(0, 0, -1);
 
         // textures
@@ -325,15 +303,7 @@ function createEngineWithNoseCone(radius, length, faces) {
         texCoords.push(0.5 + 0.5*nx1, 0.5 + 0.5*ny1);
 
         texCoords.push(s0, 0.0);
-        texCoords.push(s1, 1.0);
-        texCoords.push(s0, 1.0);
-
-        texCoords.push(s0, 0.0);
         texCoords.push(s1, 0.0);
-        texCoords.push(s1, 1.0);
-
-        texCoords.push(0.5 + 0.5*nx1, 0.5 - 0.5*ny1);
-        texCoords.push(0.5 + 0.5*nx0, 0.5 - 0.5*ny0);
         texCoords.push(0.5, 0.5);
 
         s0 = s1;
@@ -356,26 +326,31 @@ function createEngineWithNoseCone(radius, length, faces) {
     normalAttribArray.setElements(new Float32Array(normals));
     geometry.setVertexAttribArray('Normal', normalAttribArray);
 
-    let colorAttribArray = new osg.BufferArray(osg.BufferArray.ARRAY_BUFFER, null, 4);
-    colorAttribArray.setElements(new Float32Array(colors));
-    geometry.setVertexAttribArray('Color', colorAttribArray);
+    let texture = new osg.Texture();
+    osgDB.readImageURL('ship_texture.jpg').then(function (image) {
+        texture.setImage(image);
+        geometry.getOrCreateStateSet().setTextureAttributeAndModes(0, texture);
+    });
 
-    geometry.getPrimitives().push(new osg.DrawArrays(osg.PrimitiveSet.TRIANGLES, 0, coordinates.length/3));
+    geometry.getPrimitives().push(new osg.DrawArrays(osg.PrimitiveSet.TRIANGLE_STRIP, 0, coordinates.length/3));
 
     return geometry;
 }
 
-function createShipNoseCone(radius, height, faces) {
+function createCone(radius, height, faces) {
     let coordinates = [];
     let colors = [];
     let normals = [];
+    let texCoords = [];
 
     let angle = 0;
     let angleIncrement = (2*Math.PI)/faces;
+
     let x0 = radius*Math.cos(angle);
     let y0 = radius*Math.sin(angle);
     let nx0 = Math.cos(angle);
     let ny0 = Math.sin(angle);
+    let s0 = 0;
 
     for(let i=0; i<faces; i++) {
         angle += angleIncrement;
@@ -388,8 +363,6 @@ function createShipNoseCone(radius, height, faces) {
         coordinates.push(x1, y1, 0);
         coordinates.push(x0, y0, 0);
 
-        coordinates.push(x0, y0, 0);
-        coordinates.push(x1, y1, 0);
         coordinates.push(0, 0, height);
 
         x0 = x1;
@@ -400,20 +373,18 @@ function createShipNoseCone(radius, height, faces) {
         let ny1 = Math.sin(angle);
 
         normals.push(0, 0, -1);
-        normals.push(0, 0, -1);
-        normals.push(0, 0, -1);
-
-        normals.push(nx0, ny0, 1);
         normals.push(nx1, ny1, 1);
+        normals.push(nx0, ny0, 1);
+
         normals.push(0, 0, 1);
 
         nx0 = nx1;
         ny0 = ny1;
-    }
 
-    // colors
-    for(let i=0; i<coordinates.length/3; i++) {
-        colors.push(0, 1, 0, 1);
+        // colors
+        for(let j=0; j<4; j++) {
+            colors.push(0.529, 0.070, 0.070, 1);
+        }
     }
 
     let geometry = new osg.Geometry();
@@ -430,7 +401,7 @@ function createShipNoseCone(radius, height, faces) {
     normalAttribArray.setElements(new Float32Array(normals));
     geometry.setVertexAttribArray('Normal', normalAttribArray);
 
-    geometry.getPrimitives().push(new osg.DrawArrays(osg.PrimitiveSet.TRIANGLES, 0, coordinates.length/3));
+    geometry.getPrimitives().push(new osg.DrawArrays(osg.PrimitiveSet.TRIANGLE_STRIP, 0, coordinates.length/3));
 
     return geometry;
 }

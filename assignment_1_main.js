@@ -2,6 +2,11 @@ const LEFT_ARROW = 37;
 const RIGHT_ARROW = 39;
 const UP_ARROW = 38;
 const DOWN_ARROW = 40;
+const H_KEY = 72;
+
+const ROCK_Z_START_POS = 50;
+const ROCK_SPEED = 10;
+const ROCK_RADIUS = 0.2;
 
 let root;
 
@@ -9,12 +14,12 @@ let shipXPos = 0;
 let shipYPos = -2;
 let shipZPos = -4;
 
-const rockZPos = 50;
-const rockSpeedMetresPerSecond = 10;
-const rockRadius = 0.2;
-
 let shipTransform;
 let shipMatrix;
+
+let mainHeadLight;
+let mainLightSource;
+let mainLightSourceEnabled = true;
 
 let nextLightNumber = 0;
 function getNextLightNumber() {
@@ -32,6 +37,9 @@ function init() {
 function createScene() {
     root = new osg.Node();
 
+    mainLightSource = createDirectionalLightSource(0, 0.5, -1, 1.0, 1.0, 1.0); //off set ot show shadows
+    root.addChild(mainLightSource);
+
     let ship = createShip(shipXPos, shipYPos, shipZPos, 1);
     shipTransform = ship[0];
     shipMatrix = ship[1];
@@ -40,8 +48,6 @@ function createScene() {
     root.addChild(createBackground());
 
     setInterval(createRock, 200);
-
-    root.addChild(createDirectionalLightSource(0, 0.5, -1, 1.0, 1.0, 1.0)); //off set ot show shadows
 
     return root;
 }
@@ -60,6 +66,18 @@ function createBackground() {
     return background;
 }
 
+function swapLights() {
+    if(mainLightSourceEnabled) {
+        mainLightSource.getLight().setEnabled(false);
+        mainHeadLight.getLight().setEnabled(true);
+        mainLightSourceEnabled = false;
+    } else {
+        mainLightSource.getLight().setEnabled(true);
+        mainHeadLight.getLight().setEnabled(false);
+        mainLightSourceEnabled = true;
+    }
+}
+
 function keyPressed(event) {
     let keyCode = event.keyCode;
 
@@ -75,6 +93,9 @@ function keyPressed(event) {
             break;
         case RIGHT_ARROW:
             shipXPos--;
+            break;
+        case H_KEY:
+            swapLights();
             break;
     }
 
@@ -92,7 +113,7 @@ function createRock() {
     let x = Math.floor(Math.random() * (max_x - min_x + 1) + min_x);
     let y = Math.floor(Math.random() * (max_y - min_y + 1) + min_y);
 
-    let rock = osg.createTexturedSphere(rockRadius);
+    let rock = osg.createTexturedSphere(ROCK_RADIUS);
 
     let material = new osg.Material();
     material.setDiffuse([0.035, 0.945, 0.815, 1.0]); // cyan
@@ -102,7 +123,7 @@ function createRock() {
     rock.getOrCreateStateSet().setAttributeAndModes(material);
 
     let rockDistanceMatrix = new osg.Matrix.create();
-    osg.Matrix.makeTranslate(x, y, rockZPos, rockDistanceMatrix);
+    osg.Matrix.makeTranslate(x, y, ROCK_Z_START_POS, rockDistanceMatrix);
     let rockDistanceTransform = new osg.MatrixTransform();
     rockDistanceTransform.setMatrix(rockDistanceMatrix);
     rockDistanceTransform.addChild(rock);
@@ -124,12 +145,12 @@ animateRockMotion.prototype = {
         }
 
         let rockTravelTimeSeconds = simulationTimeSeconds - this.startTimeSeconds;
-        let distanceTravelledMeters = rockSpeedMetresPerSecond * rockTravelTimeSeconds;
+        let distanceTravelledMeters = ROCK_SPEED * rockTravelTimeSeconds;
 
         let matrix = rockTransform.getMatrix();
         let x = matrix[12];
         let y = matrix[13];
-        let z = rockZPos - distanceTravelledMeters;
+        let z = ROCK_Z_START_POS - distanceTravelledMeters;
 
         checkForCollision(osg.Matrix.makeTranslate(x, y, z, matrix));
 
@@ -157,24 +178,25 @@ function checkForCollision(rockMatrix) {
                                                 + Math.pow(rockY-shipY, 2)
                                                 + Math.pow(rockZ-shipZ, 2));
 
-    if(distanceBetweenShipAndRock < shipRadius + rockRadius) {
+    if(distanceBetweenShipAndRock < shipRadius + ROCK_RADIUS) {
         alert('You crashed!');
     }
 }
 
 function createShip(x, y, z, length) {
     let engineBodyLength = length*0.5;
-    let engineRadius = rockRadius*0.5;
+    let engineRadius = ROCK_RADIUS*0.5;
     let faces = 10;
 
     // create shapes
-    let mainBody = createEngineWithNoseCone(rockRadius, length, faces);
-    let mainBodyEngine = createShipNoseCone(rockRadius*0.85, length*0.33, faces)
+    let mainBody = createEngineWithNoseCone(ROCK_RADIUS, length, faces);
+    let mainBodyEngine = createShipNoseCone(ROCK_RADIUS*0.85, length*0.33, faces)
     let leftEngine = createEngineWithNoseCone(engineRadius, engineBodyLength, faces);
     let rightEngine = createEngineWithNoseCone(engineRadius, engineBodyLength, faces);
 
     // create headlight
-    let mainHeadLight = createSpotLight(0, 0, 1, 1, 1, 1, 1, 0, 0, 40, 1.0);
+    mainHeadLight = createSpotLight(0, 0, 1, 1, 1, 1, 1, 0, 0, 40, 1.0);
+    mainHeadLight.getLight().setEnabled(false);
 
     // position the main body
     let mainBodyMatrix = new osg.Matrix.create();
@@ -198,13 +220,13 @@ function createShip(x, y, z, length) {
 
     // attach the side engines
     let leftEngineTranslateMatrix = new osg.Matrix.create();
-    leftEngineTranslateMatrix = osg.Matrix.makeTranslate(x-rockRadius, y, z, leftEngineTranslateMatrix);
+    leftEngineTranslateMatrix = osg.Matrix.makeTranslate(x-ROCK_RADIUS, y, z, leftEngineTranslateMatrix);
     let leftEngineTranslateTransform = new osg.MatrixTransform();
     leftEngineTranslateTransform.setMatrix(leftEngineTranslateMatrix);
     leftEngineTranslateTransform.addChild(leftEngine);
 
     let rightEngineTranslateMatrix = new osg.Matrix.create();
-    rightEngineTranslateMatrix = osg.Matrix.makeTranslate(x+rockRadius, y, z, rightEngineTranslateMatrix);
+    rightEngineTranslateMatrix = osg.Matrix.makeTranslate(x+ROCK_RADIUS, y, z, rightEngineTranslateMatrix);
     let rightEngineTranslateTransform = new osg.MatrixTransform();
     rightEngineTranslateTransform.setMatrix(rightEngineTranslateMatrix);
     rightEngineTranslateTransform.addChild(rightEngine);

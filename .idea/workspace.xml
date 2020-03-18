@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="ad8f7770-b997-4d36-bb98-5d6afcbb48be" name="Default Changelist" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ProjectId" id="1Yi2FysWUJ8VzcntdjTqZpoMEZO" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showExcludedFiles" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\eoino\Desktop\drive\OSGJS" />
+    </key>
+  </component>
+  <component name="RunManager" selected="JavaScript Debug.main.html">
+    <configuration name="main.html" type="JavascriptDebugType" temporary="true" nameIsGenerated="true" uri="http://localhost:63342/OSGJS/main.html" useBuiltInWebServerPort="true">
+      <method v="2" />
+    </configuration>
+    <configuration name="assignment_1_main.js" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/assignment_1_main.js" working-dir="$PROJECT_DIR$">
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="JavaScript Debug.main.html" />
+        <item itemvalue="Node.js.assignment_1_main.js" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="ad8f7770-b997-4d36-bb98-5d6afcbb48be" name="Default Changelist" comment="" />
+      <created>1583411376928</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1583411376928</updated>
+      <workItem from="1583411378195" duration="616000" />
+      <workItem from="1583431825072" duration="4051000" />
+      <workItem from="1583522835277" duration="3587000" />
+      <workItem from="1583776190194" duration="7888000" />
+      <workItem from="1583838491118" duration="13578000" />
+      <workItem from="1583855520330" duration="4355000" />
+      <workItem from="1584129896945" duration="18573000" />
+      <workItem from="1584546946424" duration="4282000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="809" y="190" key="run.anything.popup" timestamp="1583777448147">
+      <screen x="0" y="0" width="1536" height="834" />
+    </state>
+    <state x="809" y="190" key="run.anything.popup/0.0.1536.834@0.0.1536.834" timestamp="1583777448147" />
+  </component>
+</project>

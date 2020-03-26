@@ -1,1 +1,1 @@
-Hosted at [eoinor.xyz](eoinor.xyz)
+Hosted at [eoinor.xyz](http://eoinor.xyz)

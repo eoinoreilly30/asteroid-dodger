@@ -2,11 +2,6 @@ const LEFT_ARROW = 37;
 const RIGHT_ARROW = 39;
 const UP_ARROW = 38;
 const DOWN_ARROW = 40;
-const H_KEY = 72;
-
-const ROCK_Z_START_POS = 50;
-const ROCK_SPEED = 10;
-const ROCK_RADIUS = 0.2;
 
 let root;
 
@@ -14,12 +9,12 @@ let shipXPos = 0;
 let shipYPos = -2;
 let shipZPos = -4;
 
+const rockZPos = 50;
+const rockSpeedMetresPerSecond = 10;
+const rockRadius = 0.2;
+
 let shipTransform;
 let shipMatrix;
-
-let mainHeadLight;
-let mainLightSource;
-let mainLightSourceEnabled = true;
 
 let nextLightNumber = 0;
 function getNextLightNumber() {
@@ -31,14 +26,11 @@ function init() {
     canvas.addEventListener('keydown', keyPressed);
     canvas.focus();
     disableDefaultManipulator();
-    disableDefaultLight()
+    // disableDefaultLight()
 }
 
 function createScene() {
     root = new osg.Node();
-
-    mainLightSource = createDirectionalLightSource(0, 0.5, -1, 1.0, 1.0, 1.0); //off set ot show shadows
-    root.addChild(mainLightSource);
 
     let ship = createShip(shipXPos, shipYPos, shipZPos, 1);
     shipTransform = ship[0];
@@ -46,8 +38,10 @@ function createScene() {
     root.addChild(shipTransform);
 
     root.addChild(createBackground());
-
+    // createRock();
     setInterval(createRock, 200);
+
+    root.addChild(createDirectionalLightSource(0, 2, -5, 1.0, 1.0, 1.0));
 
     return root;
 }
@@ -66,19 +60,60 @@ function createBackground() {
     return background;
 }
 
-function swapLights() {
-    if(mainLightSourceEnabled) {
-        mainLightSource.getLight().setEnabled(false);
-        mainHeadLight.getLight().setEnabled(true);
-        mainLightSourceEnabled = false;
-    } else {
-        mainLightSource.getLight().setEnabled(true);
-        mainHeadLight.getLight().setEnabled(false);
-        mainLightSourceEnabled = true;
-    }
+document.addEventListener('touchstart', handleTouchStart, false);
+document.addEventListener('touchmove', handleTouchMove, false);
+
+var xDown = null;
+var yDown = null;
+
+function getTouches(evt) {
+  return evt.touches ||             // browser API
+         evt.originalEvent.touches; // jQuery
 }
 
+function handleTouchStart(evt) {
+    const firstTouch = getTouches(evt)[0];
+    xDown = firstTouch.clientX;
+    yDown = firstTouch.clientY;
+};
+
+function handleTouchMove(evt) {
+    document.getElementById('music').play();
+    if ( ! xDown || ! yDown ) {
+        return;
+    }
+
+    var xUp = evt.touches[0].clientX;
+    var yUp = evt.touches[0].clientY;
+
+    var xDiff = xDown - xUp;
+    var yDiff = yDown - yUp;
+
+    if ( Math.abs( xDiff ) > Math.abs( yDiff ) ) {/*most significant*/
+        if ( xDiff > 0 ) {
+            shipXPos++;
+        } else {
+            shipXPos--;
+        }
+    } else {
+        if ( yDiff > 0 ) {
+            shipYPos++;
+        } else {
+            shipYPos--;
+        }
+    }
+    /* reset values */
+    xDown = null;
+    yDown = null;
+
+    let matrix = new osg.Matrix.create();
+    matrix = osg.Matrix.makeTranslate(shipXPos, shipYPos+2, shipZPos+3, matrix);
+    shipTransform.setMatrix(matrix);
+};
+
+
 function keyPressed(event) {
+    document.getElementById('music').play();
     let keyCode = event.keyCode;
 
     switch(keyCode) {
@@ -93,9 +128,6 @@ function keyPressed(event) {
             break;
         case RIGHT_ARROW:
             shipXPos--;
-            break;
-        case H_KEY:
-            swapLights();
             break;
     }
 
@@ -113,25 +145,62 @@ function createRock() {
     let x = Math.floor(Math.random() * (max_x - min_x + 1) + min_x);
     let y = Math.floor(Math.random() * (max_y - min_y + 1) + min_y);
 
-    let rock = osg.createTexturedSphere(ROCK_RADIUS);
+    let rock = osg.createTexturedSphere(rockRadius);
 
-    let material = new osg.Material();
-    material.setDiffuse([0.035, 0.945, 0.815, 1.0]); // cyan
-    material.setAmbient([0.031, 0.666, 0.576, 1.0]); // slightly darker cyan
-    material.setSpecular([1.0, 1.0, 1.0, 1.0]); // white
-    material.setShininess(100); // demonstrates specular
-    rock.getOrCreateStateSet().setAttributeAndModes(material);
+    let emissiveMaterial = new osg.Material();
+    emissiveMaterial.setEmission([1.0, 1.0, 0.0, 1.0]);
+
+    // let light = createPointLight(1.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+    // light.getLight().setEnabled(true);
+
+    rock.getOrCreateStateSet().setAttributeAndModes(emissiveMaterial);
+    // rock.addUpdateCallback(new animateRockGlow());
 
     let rockDistanceMatrix = new osg.Matrix.create();
-    osg.Matrix.makeTranslate(x, y, ROCK_Z_START_POS, rockDistanceMatrix);
+    osg.Matrix.makeTranslate(x, y, rockZPos, rockDistanceMatrix);
     let rockDistanceTransform = new osg.MatrixTransform();
     rockDistanceTransform.setMatrix(rockDistanceMatrix);
     rockDistanceTransform.addChild(rock);
+    // rockDistanceTransform.addChild(light);
 
     rockDistanceTransform.addUpdateCallback(new animateRockMotion());
 
     root.addChild(rockDistanceTransform);
 }
+
+// function createPointLight(r, g, b, c, l, q) {
+//     let pointLight = new osg.Light(getNextLightNumber());
+//     pointLight.setPosition([0, 0, 0, 1]);
+//
+//     pointLight.setDiffuse([r, g, b, 1.0]);
+//     pointLight.setSpecular([r, g, b, 1.0]);
+//     pointLight.setAmbient([0.0, 0.0, 0.0, 1.0]);
+//
+//     pointLight.setConstantAttenuation(c);
+//     pointLight.setLinearAttenuation(l);
+//     pointLight.setQuadraticAttenuation(q);
+//
+//     let lightSource = new osg.LightSource();
+//     lightSource.setLight(pointLight);
+//
+//     return lightSource;
+// }
+
+// let animateRockGlow = function() {};
+// animateRockGlow.prototype = {
+//     update: function(node, nodeVisitor) {
+//         let emission = node.getStateSet()['attributeMap']['Material']['_object']['_emission'];
+//         let currentTime = nodeVisitor.getFrameStamp().getSimulationTime();
+//
+//         // 0.0 to 1.0 back to 0.0 every 2 seconds
+//         let currentTimeInPeriod = (currentTime % 2);
+//         let newEmissionValue = currentTimeInPeriod;
+//         if(currentTimeInPeriod >= 1) newEmissionValue = 2 - newEmissionValue;
+//         let newEmissiveMaterial = new osg.Material();
+//         newEmissiveMaterial.setEmission([newEmissionValue, newEmissionValue, 0, 1.0]);
+//         node.getOrCreateStateSet().setAttributeAndModes(newEmissiveMaterial);
+//     }
+// };
 
 let animateRockMotion = function() {};
 animateRockMotion.prototype = {
@@ -145,12 +214,12 @@ animateRockMotion.prototype = {
         }
 
         let rockTravelTimeSeconds = simulationTimeSeconds - this.startTimeSeconds;
-        let distanceTravelledMeters = ROCK_SPEED * rockTravelTimeSeconds;
+        let distanceTravelledMeters = rockSpeedMetresPerSecond * rockTravelTimeSeconds;
 
         let matrix = rockTransform.getMatrix();
         let x = matrix[12];
         let y = matrix[13];
-        let z = ROCK_Z_START_POS - distanceTravelledMeters;
+        let z = rockZPos - distanceTravelledMeters;
 
         checkForCollision(osg.Matrix.makeTranslate(x, y, z, matrix));
 
@@ -178,25 +247,25 @@ function checkForCollision(rockMatrix) {
                                                 + Math.pow(rockY-shipY, 2)
                                                 + Math.pow(rockZ-shipZ, 2));
 
-    if(distanceBetweenShipAndRock < shipRadius + ROCK_RADIUS) {
+    if(distanceBetweenShipAndRock < shipRadius + rockRadius) {
         alert('You crashed!');
     }
 }
 
 function createShip(x, y, z, length) {
     let engineBodyLength = length*0.5;
-    let engineRadius = ROCK_RADIUS*0.5;
+    let engineRadius = rockRadius*0.5;
     let faces = 10;
 
     // create shapes
-    let mainBody = createCylinderWithCone(ROCK_RADIUS, length, faces);
-    let mainBodyEngine = createCone(ROCK_RADIUS*0.85, length*0.33, faces)
-    let leftEngine = createCylinderWithCone(engineRadius, engineBodyLength, faces);
-    let rightEngine = createCylinderWithCone(engineRadius, engineBodyLength, faces);
+    let mainBody = createEngineWithNoseCone(rockRadius, length, faces);
+    let mainBodyEngine = createShipNoseCone(rockRadius*0.85, length*0.33, faces)
+    let leftEngine = createEngineWithNoseCone(engineRadius, engineBodyLength, faces);
+    let rightEngine = createEngineWithNoseCone(engineRadius, engineBodyLength, faces);
 
-    // create headlight
-    mainHeadLight = createSpotLight(0, 0, 1, 1, 1, 1, 1, 0, 0, 40, 1.0);
-    mainHeadLight.getLight().setEnabled(false);
+    // create headlights
+    // let leftHeadlight = createDirectionalLightSource(0, 0, 0, 1.0, 1.0, 1.0);
+    // let rightHeadlight = createDirectionalLightSource(0, 0, 0, 1.0, 1.0, 1.0);
 
     // position the main body
     let mainBodyMatrix = new osg.Matrix.create();
@@ -220,36 +289,28 @@ function createShip(x, y, z, length) {
 
     // attach the side engines
     let leftEngineTranslateMatrix = new osg.Matrix.create();
-    leftEngineTranslateMatrix = osg.Matrix.makeTranslate(x-ROCK_RADIUS, y, z, leftEngineTranslateMatrix);
+    leftEngineTranslateMatrix = osg.Matrix.makeTranslate(x-rockRadius, y, z, leftEngineTranslateMatrix);
     let leftEngineTranslateTransform = new osg.MatrixTransform();
     leftEngineTranslateTransform.setMatrix(leftEngineTranslateMatrix);
     leftEngineTranslateTransform.addChild(leftEngine);
 
     let rightEngineTranslateMatrix = new osg.Matrix.create();
-    rightEngineTranslateMatrix = osg.Matrix.makeTranslate(x+ROCK_RADIUS, y, z, rightEngineTranslateMatrix);
+    rightEngineTranslateMatrix = osg.Matrix.makeTranslate(x+rockRadius, y, z, rightEngineTranslateMatrix);
     let rightEngineTranslateTransform = new osg.MatrixTransform();
     rightEngineTranslateTransform.setMatrix(rightEngineTranslateMatrix);
     rightEngineTranslateTransform.addChild(rightEngine);
 
-    // attach the headlight
-    let mainHeadLightTranslateMatrix = new osg.Matrix.create();
-    mainHeadLightTranslateMatrix = osg.Matrix.makeTranslate(x, y, z+length, mainHeadLightTranslateMatrix);
-    let mainHeadLightTranslateTransform = new osg.MatrixTransform();
-    mainHeadLightTranslateTransform.setMatrix(mainHeadLightTranslateMatrix);
-    mainHeadLightTranslateTransform.addChild(mainHeadLight);
-
     let transformArray = [mainBodyTransform,
         mainEngineTranslateTransform,
         leftEngineTranslateTransform,
-        rightEngineTranslateTransform,
-        mainHeadLightTranslateTransform];
+        rightEngineTranslateTransform];
     let mainTransform = new osg.MatrixTransform();
     transformArray.map(tf => mainTransform.addChild(tf));
 
     return [mainTransform, mainBodyMatrix];
 }
 
-function createCylinderWithCone(radius, length, faces) {
+function createEngineWithNoseCone(radius, length, faces) {
     let engineLength = 0.66*length;
     let noseLength = length - engineLength;
 
@@ -258,6 +319,7 @@ function createCylinderWithCone(radius, length, faces) {
     let coordinates = [];
     let normals = [];
     let texCoords = [];
+    let colors = [];
 
     let x0 = radius*Math.cos(angle);
     let y0 = radius*Math.sin(angle);
@@ -277,22 +339,43 @@ function createCylinderWithCone(radius, length, faces) {
         coordinates.push(x1, y1, engineLength);
 
         coordinates.push(x0, y0, 0);
+        coordinates.push(x1, y1, engineLength);
+        coordinates.push(x0, y0, engineLength);
+
+        coordinates.push(x0, y0, 0);
         coordinates.push(x1, y1, 0);
+        coordinates.push(x1, y1, engineLength);
+
+        coordinates.push(x1, y1, 0);
+        coordinates.push(x0, y0, 0);
         coordinates.push(0, 0, 0);
 
         x0 = x1;
         y0 = y1;
 
+        // colors
+        for(let j=0; j<12; j++) {
+            colors.push(0, 1, 0, 1);
+        }
+
         // normals
         let nx1 = Math.cos(angle);
         let ny1 = Math.sin(angle);
 
-        normals.push(0, 0, 1);
+        normals.push(nx0, ny0, 1);
         normals.push(nx0, ny0, 0);
         normals.push(nx1, ny1, 0);
 
-        normals.push(nx0, ny0, -1);
-        normals.push(nx1, ny1, -1);
+        normals.push(nx0, ny0, 0);
+        normals.push(nx1, ny1, 0);
+        normals.push(nx0, ny0, 0);
+
+        normals.push(nx0, ny0, 0);
+        normals.push(nx1, ny1, 0);
+        normals.push(nx1, ny1, 0);
+
+        normals.push(0, 0, -1);
+        normals.push(0, 0, -1);
         normals.push(0, 0, -1);
 
         // textures
@@ -303,7 +386,15 @@ function createCylinderWithCone(radius, length, faces) {
         texCoords.push(0.5 + 0.5*nx1, 0.5 + 0.5*ny1);
 
         texCoords.push(s0, 0.0);
+        texCoords.push(s1, 1.0);
+        texCoords.push(s0, 1.0);
+
+        texCoords.push(s0, 0.0);
         texCoords.push(s1, 0.0);
+        texCoords.push(s1, 1.0);
+
+        texCoords.push(0.5 + 0.5*nx1, 0.5 - 0.5*ny1);
+        texCoords.push(0.5 + 0.5*nx0, 0.5 - 0.5*ny0);
         texCoords.push(0.5, 0.5);
 
         s0 = s1;
@@ -326,31 +417,26 @@ function createCylinderWithCone(radius, length, faces) {
     normalAttribArray.setElements(new Float32Array(normals));
     geometry.setVertexAttribArray('Normal', normalAttribArray);
 
-    let texture = new osg.Texture();
-    osgDB.readImageURL('ship_texture.jpg').then(function (image) {
-        texture.setImage(image);
-        geometry.getOrCreateStateSet().setTextureAttributeAndModes(0, texture);
-    });
+    let colorAttribArray = new osg.BufferArray(osg.BufferArray.ARRAY_BUFFER, null, 4);
+    colorAttribArray.setElements(new Float32Array(colors));
+    geometry.setVertexAttribArray('Color', colorAttribArray);
 
-    geometry.getPrimitives().push(new osg.DrawArrays(osg.PrimitiveSet.TRIANGLE_STRIP, 0, coordinates.length/3));
+    geometry.getPrimitives().push(new osg.DrawArrays(osg.PrimitiveSet.TRIANGLES, 0, coordinates.length/3));
 
     return geometry;
 }
 
-function createCone(radius, height, faces) {
+function createShipNoseCone(radius, height, faces) {
     let coordinates = [];
     let colors = [];
     let normals = [];
-    let texCoords = [];
 
     let angle = 0;
     let angleIncrement = (2*Math.PI)/faces;
-
     let x0 = radius*Math.cos(angle);
     let y0 = radius*Math.sin(angle);
     let nx0 = Math.cos(angle);
     let ny0 = Math.sin(angle);
-    let s0 = 0;
 
     for(let i=0; i<faces; i++) {
         angle += angleIncrement;
@@ -363,6 +449,8 @@ function createCone(radius, height, faces) {
         coordinates.push(x1, y1, 0);
         coordinates.push(x0, y0, 0);
 
+        coordinates.push(x0, y0, 0);
+        coordinates.push(x1, y1, 0);
         coordinates.push(0, 0, height);
 
         x0 = x1;
@@ -373,18 +461,20 @@ function createCone(radius, height, faces) {
         let ny1 = Math.sin(angle);
 
         normals.push(0, 0, -1);
-        normals.push(nx1, ny1, 1);
-        normals.push(nx0, ny0, 1);
+        normals.push(0, 0, -1);
+        normals.push(0, 0, -1);
 
+        normals.push(nx0, ny0, 1);
+        normals.push(nx1, ny1, 1);
         normals.push(0, 0, 1);
 
         nx0 = nx1;
         ny0 = ny1;
+    }
 
-        // colors
-        for(let j=0; j<4; j++) {
-            colors.push(0.529, 0.070, 0.070, 1);
-        }
+    // colors
+    for(let i=0; i<coordinates.length/3; i++) {
+        colors.push(0, 1, 0, 1);
     }
 
     let geometry = new osg.Geometry();
@@ -401,7 +491,11 @@ function createCone(radius, height, faces) {
     normalAttribArray.setElements(new Float32Array(normals));
     geometry.setVertexAttribArray('Normal', normalAttribArray);
 
-    geometry.getPrimitives().push(new osg.DrawArrays(osg.PrimitiveSet.TRIANGLE_STRIP, 0, coordinates.length/3));
+    // let material = new osg.Material();
+    // material.setDiffuse([0, 1, 0, 1]);
+    // geometry.getOrCreateStateSet().setAttributeAndModes(material);
+
+    geometry.getPrimitives().push(new osg.DrawArrays(osg.PrimitiveSet.TRIANGLES, 0, coordinates.length/3));
 
     return geometry;
 }
@@ -412,32 +506,10 @@ function createDirectionalLightSource(x, y, z, r, g, b) {
 
     directionalLight.setDiffuse([r, g, b, 1.0]);
     directionalLight.setSpecular([r, g, b, 1.0]);
-    directionalLight.setAmbient([0.0, 0.0, 0.0, 1.0]); // no need i.e. light source doesn't generate
+    directionalLight.setAmbient([0.0, 0.0, 0.0, 1.0]);
 
     let lightSource = new osg.LightSource();
     lightSource.setLight(directionalLight);
 
-    return lightSource;
-}
-
-function createSpotLight(x, y, z, r, g, b, c, l, q, cutoff, blend) {
-    let spotLight = new osg.Light(getNextLightNumber());
-
-    spotLight.setPosition([0, 0, 0, 1]);
-    spotLight.setDirection([x, y, z]);
-
-    spotLight.setDiffuse([r, g, b, 1.0]);
-    spotLight.setSpecular([r, g, b, 1.0]);
-    spotLight.setAmbient([0.0, 0.0, 0.0, 1.0]); // no need i.e. light source doesn't generate
-
-    spotLight.setConstantAttenuation(c);
-    spotLight.setLinearAttenuation(l);
-    spotLight.setQuadraticAttenuation(q);
-
-    spotLight.setSpotCutoff(cutoff);
-    spotLight.setSpotBlend(blend);
-
-    let lightSource = new osg.LightSource();
-    lightSource.setLight(spotLight);
     return lightSource;
 }

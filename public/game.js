@@ -168,40 +168,6 @@ function createRock() {
     root.addChild(rockDistanceTransform);
 }
 
-// function createPointLight(r, g, b, c, l, q) {
-//     let pointLight = new osg.Light(getNextLightNumber());
-//     pointLight.setPosition([0, 0, 0, 1]);
-//
-//     pointLight.setDiffuse([r, g, b, 1.0]);
-//     pointLight.setSpecular([r, g, b, 1.0]);
-//     pointLight.setAmbient([0.0, 0.0, 0.0, 1.0]);
-//
-//     pointLight.setConstantAttenuation(c);
-//     pointLight.setLinearAttenuation(l);
-//     pointLight.setQuadraticAttenuation(q);
-//
-//     let lightSource = new osg.LightSource();
-//     lightSource.setLight(pointLight);
-//
-//     return lightSource;
-// }
-
-// let animateRockGlow = function() {};
-// animateRockGlow.prototype = {
-//     update: function(node, nodeVisitor) {
-//         let emission = node.getStateSet()['attributeMap']['Material']['_object']['_emission'];
-//         let currentTime = nodeVisitor.getFrameStamp().getSimulationTime();
-//
-//         // 0.0 to 1.0 back to 0.0 every 2 seconds
-//         let currentTimeInPeriod = (currentTime % 2);
-//         let newEmissionValue = currentTimeInPeriod;
-//         if(currentTimeInPeriod >= 1) newEmissionValue = 2 - newEmissionValue;
-//         let newEmissiveMaterial = new osg.Material();
-//         newEmissiveMaterial.setEmission([newEmissionValue, newEmissionValue, 0, 1.0]);
-//         node.getOrCreateStateSet().setAttributeAndModes(newEmissiveMaterial);
-//     }
-// };
-
 let animateRockMotion = function() {};
 animateRockMotion.prototype = {
     startTimeSeconds: -1,

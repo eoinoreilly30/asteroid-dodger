@@ -1,6 +1,6 @@
 # Asteroid Dodger
-A web game built with OSG.JS. Dodge the glowing asteroids  
+[asteroid-dodger-cf30b.web.app](https://asteroid-dodger-cf30b.web.app/)
 
-Hosted at <a href="https://asteroid-dodger.0x30.in" target="_blank">asteroid-dodger.0x30.in</a>
+A web game built with OSG.JS. Dodge the glowing asteroids  
 
 ![image](https://github.com/eoinoreilly30/asteroid-dodger/blob/master/public/res/asteroid_dodger.png)
